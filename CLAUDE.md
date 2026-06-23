@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-An early-stage research repository for **information-theoretic investing**: framing trading and investing as an information problem using KL divergence, calibrated forecasts, market-implied distributions, Kelly growth, and **nats per day** as the primary edge metric.
+A research project exploring how trading and investing can be understood as an information problem — asking "how much does the investor know that the market doesn't?" — rather than purely a price or risk problem.
 
 The intended structure (mostly not yet built):
 - `README.md` — human-facing overview
@@ -16,26 +16,31 @@ The intended structure (mostly not yet built):
 
 ## The conceptual framework (read llms.txt first)
 
-`llms.txt` is the canonical spec for this project's intellectual framework. Before writing any code or notes, read it. Key points:
+`llms.txt` is the canonical spec for this project's intellectual framework. Read it before writing any code or notes. Key ideas in plain terms:
 
-- **P** = investor's calibrated forecast distribution over future outcomes
-- **Q** = market-implied distribution inferred from prices
-- **Edge** = D_KL(P‖Q) = Σ P(x) ln(P(x)/Q(x)), measured in **nats**
-- **Nats per day** = average KL divergence per trading day across all actions; the primary scalar edge metric (preferred over Sharpe or win rate)
-- Net log-growth ≈ KL rate − cost drag (transaction costs, spread, market impact)
-- Capacity limit: as capital scales, market impact pushes Q toward P, reducing marginal KL per unit of capital
-- Theoretical grounding: Oscar Stiffelman's "Investing is Compression" (Kelly growth decomposed into money + entropy + KL divergence terms)
+The project centers on comparing two probability distributions — a spread of guesses about what might happen and how likely each outcome is:
 
-When reasoning about edge, always think in terms of two explicit distributions P and Q. Convert nats to bits (× 0.693) for intuition; multiply by 252 for annualized nats/year.
+- **P** (jargon: *the investor's calibrated forecast distribution*) — the investor's own view of the odds of different outcomes
+- **Q** (jargon: *the market-implied distribution*) — what the market's current prices imply about the odds of those same outcomes
+
+The gap between P and Q is the investor's **edge** — how much they know that the market hasn't priced in yet. This gap is measured with a formula called **KL divergence** (jargon: *Kullback–Leibler divergence*, written D_KL(P‖Q)), which produces a number in units called **nats** (jargon: *natural-log information units*; 1 nat ≈ 1.44 bits).
+
+That gap, averaged over a trading day, gives **nats per day** (jargon: *the KL rate*) — the project's primary way of scoring edge. It is preferred over conventional metrics like Sharpe ratio or win rate because it directly measures information advantage rather than a side-effect of it.
+
+Actual returns are less than the raw edge because of **cost drag** (jargon: *transaction costs, spread, and market impact*). So: net growth ≈ nats per day − cost drag. As a strategy grows in size, trading it moves prices, which shrinks the gap between P and Q and reduces the edge — this is the **capacity limit** (jargon: *market impact reducing marginal KL per unit of capital*).
+
+The theoretical grounding comes from Oscar Stiffelman's "Investing is Compression," which shows that **Kelly growth** (jargon: *log-optimal portfolio growth, the reinvestment rate that maximises long-run wealth*) can be broken into three parts: a money term, an entropy term, and a KL divergence term.
+
+To convert between units: nats × 0.693 = bits; nats/day × 252 = annualised nats/year.
 
 ## Development direction
 
-When adding code to `src/`, the design goals from `llms.txt` should guide implementation choices:
+When adding code to `src/`, let the design goals from `llms.txt` guide decisions:
 
-1. **Distribution-first**: always model P and Q explicitly rather than working directly with point estimates
-2. Use KL divergence in nats as the primary edge summary scalar
-3. Prefer Kelly-style or fractional Kelly sizing; account for transaction costs as reductions in effective KL captured
-4. When building estimation procedures, aim to produce empirical nats/day benchmarks across asset classes and market regimes
+1. Always work with two explicit probability distributions (P and Q) rather than collapsing to a single point estimate
+2. Use nats per day as the primary summary number for edge
+3. Size positions using **Kelly or fractional Kelly** (jargon: *bet-sizing rules derived from log-growth maximisation*); explicitly subtract transaction costs from the effective edge captured
+4. Build toward producing empirical nats/day benchmarks for different asset classes and market conditions
 
 ## No build system yet
 
